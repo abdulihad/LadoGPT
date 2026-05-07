@@ -20,18 +20,19 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    const response = await axios.post(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        model: "llama3-8b-8192",
-        messages: [
-          {
-            role: "user",
-            content: message,
-          },
-        ],
-      },
-      {
+const response = await axios.post(
+  "https://api.groq.com/openai/v1/chat/completions",
+  {
+    model: "llama-3.1-8b-instant",
+    messages: [{ role: "user", content: message }],
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+  }
+);
         headers: {
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
           "Content-Type": "application/json",
@@ -45,10 +46,8 @@ app.post("/chat", async (req, res) => {
   } catch (err) {
     console.log(err.response?.data || err.message);
 
-    res.status(500).json({
-      error: "Chat failed",
-    });
-  }
+res.status(500).json({
+  error: err.response?.data || err.message,
 });
 
 /* ================= IMAGE ================= */
