@@ -4,7 +4,21 @@ function App() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [image, setImage] = useState("");
+  const recognition = new window.SpeechRecognition();
+recognition.lang = "en-US";
 
+const startVoice = () => {
+  recognition.start();
+
+  recognition.onresult = (event) => {
+    setInput(event.results[0][0].transcript);
+  };
+};
+
+const speak = (text) => {
+  const speech = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(speech);
+};
   // ================= CHAT =================
   const sendMessage = async () => {
     if (!input) return;

@@ -1,98 +1,39 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const recognition = new window.SpeechRecognition();
-recognition.lang = "en-US";
-
-const startVoice = () => {
-  recognition.start();
-
-  recognition.onresult = (event) => {
-    setInput(event.results[0][0].transcript);
-  };
-};
-const speak = (text) => {
-  const speech = new SpeechSynthesisUtterance(text);
-  window.speechSynthesis.speak(speech);
-};
-speak(data.reply);
 require("dotenv").config();
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
+
 app.post("/chat", async (req, res) => {
   try {
-    const userMessage = req.body.message;
+    const { message } = req.body;
 
-    // 1. AI TEXT (Groq)
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          {
-            role: "user",
-            content: userMessage,
-          },
-        ],
+        model: "llama3-8b-8192",
+        messages: [{ role: "user", content: message }],
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.API_KEY}`,
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
       }
     );
 
-    const aiText = response.data.choices[0].message.content;
-
-    // 2. IMAGE (optional trigger)
-    let imageUrl = null;
-
-    if (
-      userMessage.toLowerCase().includes("image") ||
-      userMessage.toLowerCase().includes("generate")
-    ) {
-      const prompt = encodeURIComponent(userMessage);
-
-      imageUrl = `https://image.pollinations.ai/prompt/${prompt}`;
-    }
-
-    // 3. SEND RESPONSE
     res.json({
-      reply: aiText,
-      image: imageUrl,
+      reply: response.data.choices[0].message.content,
     });
-
   } catch (error) {
-    console.log(error);
-
-    res.json({
-      reply: "AI Error",
-      image: null,
-    });
+    console.log(error.response?.data || error.message);
+    res.status(500).json({ error: "Chat failed" });
   }
 });
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
-});
-app.post("/image", async (req, res) => {
-  try {
-    const prompt = encodeURIComponent(req.body.prompt);
-
-    const imageUrl = `https://image.pollinations.ai/prompt/${prompt}`;
-
-    res.json({
-      image: imageUrl,
-    });
-
-  } catch (error) {
-    console.log(error);
-
-    res.json({
-      error: "Image generation failed",
-    });
-  }
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
