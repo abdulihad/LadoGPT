@@ -1,143 +1,188 @@
-import { useState } from "react";
-const API = "https://ladogpt-backend.onrender.com";
+import { useEffect, useRef, useState } from "react";
+const API = "https://lado-gpt-api.onrender.com";
 
 function App() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
-  const [image, setImage] = useState("");
-  const recognition = new window.SpeechRecognition();
-recognition.lang = "en-US";
+  const [loading, setLoading] = useState(false);
 
-const startVoice = () => {
-  recognition.start();
+  const bottomRef = useRef(null);
 
-  recognition.onresult = (event) => {
-    setInput(event.results[0][0].transcript);
-  };
-};
+  // ================= AUTO SCROLL =================
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
 
-const speak = (text) => {
-  const speech = new SpeechSynthesisUtterance(text);
-  window.speechSynthesis.speak(speech);
-};
   // ================= CHAT =================
   const sendMessage = async () => {
-  const res = await fetch(`${API}/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: input }),
-  });
+    if (!input.trim()) return;
 
-  const data = await res.json();
+    const text = input;
 
-  if (!data.reply) return;
+    const userMessage = {
+      type: "text",
+      role: "user",
+      text,
+    };
 
-  setMessages((prev) => [
-    ...prev,
-    { role: "ai", text: data.reply },
-  ]);
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoading(true);
 
-  setInput("");
-};
+    try {
+      const response = await fetch(`${API}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: text,
+        }),
+      });
 
-  // ================= IMAGE GENERATION =================
+      const data = await response.json();
+
+      const aiMessage = {
+        type: "text",
+        role: "ai",
+        text: data.reply,
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.log(error);
+    }
+
+    setLoading(false);
+  };
+
+  // ================= IMAGE =================
   const generateImage = async () => {
-  const res = await fetch(`${API}/image`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: input }),
-  });
+    if (!input.trim()) return;
 
-  const data = await res.json();
+    const text = input;
 
-  if (!data.image) return;
+    const userMessage = {
+      type: "text",
+      role: "user",
+      text,
+    };
 
-  setMessages((prev) => [
-    ...prev,
-    { role: "ai", image: data.image },
-  ]);
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoading(true);
 
-  setInput("");
-};
+    try {
+      const response = await fetch(`${API}/image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: text,
+        }),
+      });
+
+      const data = await response.json();
+
+      const imageMessage = {
+        type: "image",
+        role: "ai",
+        image: data.image,
+      };
+
+      setMessages((prev) => [...prev, imageMessage]);
+    } catch (error) {
+      console.log(error);
+    }
+
+    setLoading(false);
+  };
+
+  // ================= ENTER KEY =================
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  };
+
   // ================= UI =================
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-white">
 
+      {/* HEADER */}
+      <div className="p-4 border-b border-gray-700 text-xl font-bold">
+        AI Assistant
+      </div>
+
       {/* CHAT AREA */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-{messages.map((msg, i) => (
-  <div key={i} className="mb-2 flex">
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`flex ${
+              msg.role === "user"
+                ? "justify-end"
+                : "justify-start"
+            }`}
+          >
+            {msg.type === "text" ? (
+              <div
+                className={`max-w-[75%] p-3 rounded-2xl ${
+                  msg.role === "user"
+                    ? "bg-blue-600"
+                    : "bg-gray-700"
+                }`}
+              >
+                {msg.text}
+              </div>
+            ) : (
+              <img
+                src={msg.image}
+                alt="Generated"
+                className="rounded-2xl max-w-sm"
+              />
+            )}
+          </div>
+        ))}
 
-    <div
-      className={`p-2 rounded-lg inline-block max-w-xs ${
-        msg.role === "user"
-          ? "bg-blue-600 ml-auto text-white"
-          : "bg-gray-700 text-white"
-      }`}
-    >
-{msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
-
-{msg.image && (
-  <img
-    src={msg.image}
-    alt="AI"
-    style={{ width: "200px", borderRadius: "10px", marginTop: "10px" }}
-  />
-)}
-  </div>
-  </div>
-))}
-
-      {/* TEXT */}
-      <div>{msg.text}</div>
-
-      {/* IMAGE (NEW ADDITION) */}
-      {msg.image && (
-        <img
-          src={msg.image}
-          alt="AI"
-          className="mt-2 rounded-lg max-w-full"
-        />
-      )}
-
-    </div>
-  </div>
-))}
-
-        {/* IMAGE DISPLAY */}
-        {image && (
-          <div className="mt-4">
-            <img
-              src={image}
-              alt="AI Generated"
-              className="rounded-xl max-w-full"
-            />
+        {loading && (
+          <div className="text-gray-400">
+            AI is thinking...
           </div>
         )}
+
+        <div ref={bottomRef}></div>
 
       </div>
 
       {/* INPUT AREA */}
-      <div className="p-3 flex">
+      <div className="p-4 border-t border-gray-700 flex gap-2">
 
         <input
+          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="flex-1 p-2 rounded-l-lg bg-gray-800 outline-none"
-          placeholder="Ask or generate image..."
+          onKeyDown={handleKeyDown}
+          placeholder="Ask anything..."
+          className="flex-1 p-3 rounded-xl bg-gray-800 outline-none"
         />
 
         <button
           onClick={sendMessage}
-          className="bg-blue-600 px-6"
+          disabled={loading}
+          className="bg-blue-600 px-5 rounded-xl"
         >
           Send
         </button>
 
         <button
           onClick={generateImage}
-          className="bg-green-600 px-6 rounded-r-lg"
+          disabled={loading}
+          className="bg-green-600 px-5 rounded-xl"
         >
           Image
         </button>
@@ -148,5 +193,4 @@ const speak = (text) => {
   );
 }
 
-export default App;
-   
+export default App;   
