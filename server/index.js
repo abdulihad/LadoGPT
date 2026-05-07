@@ -39,29 +39,18 @@ app.post("/image", async (req, res) => {
   try {
     const prompt = req.body.prompt;
 
-    const response = await axios.post(
-      "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
-      { inputs: prompt },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HF_TOKEN}`,
-        },
-        responseType: "arraybuffer",
-      }
-    );
-
-    const base64 = Buffer.from(response.data).toString("base64");
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+      prompt
+    )}`;
 
     res.json({
-      image: `data:image/png;base64,${base64}`,
+      image: imageUrl,
     });
   } catch (err) {
-    console.log(err.response?.data || err.message);
-    res.status(500).json({ error: "Image failed" });
-  }
-});
+    console.log(err.message);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+    res.status(500).json({
+      error: "Image generation failed",
+    });
+  }
 });
