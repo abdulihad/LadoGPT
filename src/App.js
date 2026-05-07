@@ -4,8 +4,6 @@ function App() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [image, setImage] = useState("");
-  const [chats, setChats] = useState([]);
-  const [activeChat, setActiveChat] = useState([]);
 
   // ================= CHAT =================
   const sendMessage = async () => {
