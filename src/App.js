@@ -1,4 +1,5 @@
 import { useState } from "react";
+const API = "https://ladogpt-backend.onrender.com";
 
 function App() {
   const [input, setInput] = useState("");
@@ -21,64 +22,43 @@ const speak = (text) => {
 };
   // ================= CHAT =================
   const sendMessage = async () => {
-    if (!input) return;
+  const res = await fetch(`${API}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: input }),
+  });
 
-    const userMessage = {
-      role: "user",
-      text: input,
-    };
+  const data = await res.json();
 
-    setMessages((prev) => [...prev, userMessage]);
+  if (!data.reply) return;
 
-    try {
-      const response = await fetch("https://ladogpt-backend.onrender.com/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: input,
-        }),
-      });
+  setMessages((prev) => [
+    ...prev,
+    { role: "ai", text: data.reply },
+  ]);
 
-      const data = await response.json();
-
-      const aiMessage = {
-        role: "ai",
-        text: data.reply,
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      console.log(error);
-    }
-
-    setInput("");
-  };
+  setInput("");
+};
 
   // ================= IMAGE GENERATION =================
   const generateImage = async () => {
-    if (!input) return;
+  const res = await fetch(`${API}/image`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt: input }),
+  });
 
-    try {
-      const response = await fetch("https://ladogpt-backend.onrender.com/image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: input,
-        }),
-      });
+  const data = await res.json();
 
-      const data = await response.json();
+  if (!data.image) return;
 
-      setImage(data.image);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  setMessages((prev) => [
+    ...prev,
+    { role: "ai", image: data.image },
+  ]);
 
+  setInput("");
+};
   // ================= UI =================
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-white">
@@ -96,6 +76,18 @@ const speak = (text) => {
           : "bg-gray-700 text-white"
       }`}
     >
+{msg.text && <div className="whitespace-pre-wrap">{msg.text}</div>}
+
+{msg.image && (
+  <img
+    src={msg.image}
+    alt="AI"
+    style={{ width: "200px", borderRadius: "10px", marginTop: "10px" }}
+  />
+)}
+  </div>
+  </div>
+))}
 
       {/* TEXT */}
       <div>{msg.text}</div>

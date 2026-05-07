@@ -7,9 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+/* ================= CHAT ================= */
 app.post("/chat", async (req, res) => {
   try {
-    const { message } = req.body;
+    const message = req.body.message;
 
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -27,9 +28,36 @@ app.post("/chat", async (req, res) => {
     res.json({
       reply: response.data.choices[0].message.content,
     });
-  } catch (error) {
-    console.log(error.response?.data || error.message);
+  } catch (err) {
+    console.log(err.response?.data || err.message);
     res.status(500).json({ error: "Chat failed" });
+  }
+});
+
+/* ================= IMAGE ================= */
+app.post("/image", async (req, res) => {
+  try {
+    const prompt = req.body.prompt;
+
+    const response = await axios.post(
+      "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+      { inputs: prompt },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HF_TOKEN}`,
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    const base64 = Buffer.from(response.data).toString("base64");
+
+    res.json({
+      image: `data:image/png;base64,${base64}`,
+    });
+  } catch (err) {
+    console.log(err.response?.data || err.message);
+    res.status(500).json({ error: "Image failed" });
   }
 });
 
