@@ -31,7 +31,7 @@ const speak = (text) => {
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await fetch("http://localhost:5000/chat", {
+      const response = await fetch("https://ladogpt-backend.onrender.com/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,7 +61,7 @@ const speak = (text) => {
     if (!input) return;
 
     try {
-      const response = await fetch("http://localhost:5000/image", {
+      const response = await fetch("https://ladogpt-backend.onrender.com/image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
