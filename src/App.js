@@ -126,6 +126,12 @@ const sendMessage = async () => {
   setLoading(false);
 };
 
+const handleKeyDown = (e) => {
+  if (e.key === "Enter") {
+    sendMessage();
+  }
+};
+
   // ================= UI =================
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-white">
