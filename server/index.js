@@ -9,6 +9,11 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(express.json());
 
+/* ================= ROOT ================= */
+app.get("/", (req, res) => {
+  res.send("AI Backend Running...");
+});
+
 /* ================= CHAT ================= */
 app.post("/chat", async (req, res) => {
   try {
@@ -24,7 +29,12 @@ app.post("/chat", async (req, res) => {
       "https://api.groq.com/openai/v1/chat/completions",
       {
         model: "llama-3.1-8b-instant",
-        messages: [{ role: "user", content: message }],
+        messages: [
+          {
+            role: "user",
+            content: message,
+          },
+        ],
       },
       {
         headers: {
@@ -40,7 +50,8 @@ app.post("/chat", async (req, res) => {
 
     res.json({ reply });
   } catch (err) {
-    console.log("CHAT ERROR:", err.response?.data || err.message);
+    console.log("CHAT ERROR:");
+    console.log(err.response?.data || err.message);
 
     res.status(500).json({
       error: err.response?.data || err.message,
@@ -49,7 +60,7 @@ app.post("/chat", async (req, res) => {
 });
 
 /* ================= IMAGE ================= */
-app.post("/image", (req, res) => {
+app.post("/image", async (req, res) => {
   try {
     const { prompt } = req.body;
 
@@ -63,17 +74,17 @@ app.post("/image", (req, res) => {
       prompt
     )}`;
 
-    res.json({ image: imageUrl });
+    res.json({
+      image: imageUrl,
+    });
   } catch (err) {
+    console.log("IMAGE ERROR:");
+    console.log(err.message);
+
     res.status(500).json({
       error: "Image generation failed",
     });
   }
-});
-
-/* ================= ROOT ================= */
-app.get("/", (req, res) => {
-  res.send("AI Backend Running...");
 });
 
 /* ================= SERVER ================= */
