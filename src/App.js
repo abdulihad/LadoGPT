@@ -16,77 +16,83 @@ function App() {
   }, [messages]);
 
   // ================= CHAT =================
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+const sendMessage = async () => {
+  if (!input.trim()) return;
 
-    const text = input;
+  const text = input;
 
-    const userMessage = {
-      type: "text",
-      role: "user",
-      text,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${API}/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: text,
-        }),
-      });
-
-      const data = await response.json();
-
-      const aiMessage = {
-        type: "text",
-        role: "ai",
-        text: data.reply,
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      console.log(error);
-    }
-
-    setLoading(false);
+  const userMessage = {
+    type: "text",
+    role: "user",
+    text,
   };
 
-  // ================= IMAGE =================
-  const generateImage = async () => {
-    if (!input.trim()) return;
+  setMessages((prev) => [...prev, userMessage]);
+  setInput("");
+  setLoading(true);
 
-    const text = input;
+  try {
+    const response = await fetch(`${API}/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: text,
+      }),
+    });
 
-    const userMessage = {
+    const data = await response.json();
+
+    console.log("CHAT DATA:", data);
+
+    const aiMessage = {
       type: "text",
-      role: "user",
-      text,
+      role: "ai",
+      text: data.reply || data.error || "No response",
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
+    setMessages((prev) => [...prev, aiMessage]);
+  } catch (error) {
+    console.log("CHAT ERROR:", error);
 
-    try {
-      const response = await fetch(`${API}/image`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: text,
-        }),
-      });
+    setMessages((prev) => [
+      ...prev,
+      {
+        type: "text",
+        role: "ai",
+        text: "Chat failed",
+      },
+    ]);
+  }
 
-      const data = await response.json();
+  setLoading(false);
+};
+  // ================= IMAGE =================
+ const generateImage = async () => {
+  if (!input.trim()) return;
 
+  const text = input;
+
+  setLoading(true);
+  setInput("");
+
+  try {
+    const response = await fetch(`${API}/image`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: text,
+      }),
+    });
+
+    const data = await response.json();
+
+    console.log("IMAGE DATA:", data);
+
+    if (data.image) {
       const imageMessage = {
         type: "image",
         role: "ai",
@@ -94,19 +100,31 @@ function App() {
       };
 
       setMessages((prev) => [...prev, imageMessage]);
-    } catch (error) {
-      console.log(error);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "text",
+          role: "ai",
+          text: "Image generation failed",
+        },
+      ]);
     }
+  } catch (error) {
+    console.log("IMAGE ERROR:", error);
 
-    setLoading(false);
-  };
+    setMessages((prev) => [
+      ...prev,
+      {
+        type: "text",
+        role: "ai",
+        text: "Image generation failed",
+      },
+    ]);
+  }
 
-  // ================= ENTER KEY =================
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      sendMessage();
-    }
-  };
+  setLoading(false);
+};
 
   // ================= UI =================
   return (
