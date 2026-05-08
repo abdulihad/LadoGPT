@@ -25,9 +25,7 @@ app.post("/chat", async (req, res) => {
     const { message } = req.body;
 
     if (!message) {
-      return res.status(400).json({
-        error: "Message is required",
-      });
+      return res.status(400).json({ error: "Message is required" });
     }
 
     const response = await axios.post(
@@ -40,6 +38,7 @@ app.post("/chat", async (req, res) => {
             content: message,
           },
         ],
+        temperature: 0.7,
       },
       {
         headers: {
@@ -55,8 +54,7 @@ app.post("/chat", async (req, res) => {
 
     res.json({ reply });
   } catch (err) {
-    console.log("CHAT ERROR:");
-   console.log("CHAT RESPONSE:", data);
+    console.log("CHAT ERROR:", err.response?.data || err.message);
 
     res.status(500).json({
       error: err.response?.data || err.message,
@@ -69,29 +67,16 @@ app.post("/image", async (req, res) => {
   try {
     const { prompt } = req.body;
 
-    if (!prompt) {
-      return res.status(400).json({
-        error: "Prompt is required",
-      });
-    }
-
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
       prompt
     )}`;
 
-    res.json({
-      image: imageUrl,
-    });
+    res.json({ image: imageUrl });
   } catch (err) {
-    console.log("IMAGE ERROR:");
-   console.log("IMAGE RESPONSE:", data);
-
-    res.status(500).json({
-      error: "Image generation failed",
-    });
+    console.log(err.message);
+    res.status(500).json({ error: "Image generation failed" });
   }
 });
-
 /* ================= SERVER ================= */
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
