@@ -5,15 +5,11 @@ require("dotenv").config();
 
 const app = express();
 
-app.use(
-  cors({
-    origin: "https://lado-gpt.vercel.app",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const PORT = process.env.PORT || 10000;
 
-app.options("*", cors());
+app.use(cors());
+
+app.options(/.*/, cors());
 
 
 app.use(express.json());
