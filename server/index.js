@@ -4,15 +4,17 @@ const axios = require("axios");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
 
 app.use(
   cors({
     origin: "https://lado-gpt.vercel.app",
-    methods: ["GET", "POST"],
-    credentials: true,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.options("*", cors());
+
 
 app.use(express.json());
 
@@ -58,7 +60,7 @@ app.post("/chat", async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.log("CHAT ERROR:");
-    console.log(err.response?.data || err.message);
+   console.log("CHAT RESPONSE:", data);
 
     res.status(500).json({
       error: err.response?.data || err.message,
@@ -86,7 +88,7 @@ app.post("/image", async (req, res) => {
     });
   } catch (err) {
     console.log("IMAGE ERROR:");
-    console.log(err.message);
+   console.log("IMAGE RESPONSE:", data);
 
     res.status(500).json({
       error: "Image generation failed",
